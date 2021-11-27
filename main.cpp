@@ -7,14 +7,28 @@
 int getch(void); //实现：输入不需要回车键便返回
 int kbhit(void); //实现：检测键盘是否有输入      （这两个函数需要自行实现）
 
-#include <gperftools/profiler.h>
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #define CHESS 5 //宏定义棋子数
+
+
+#include <gperftools/profiler.h>
+
+#ifdef SIZE
+
+#define SLEN SIZE	
+
+#else
+
 #define SLEN 10 //宏定义棋盘大小
+
+#endif
+
+
+
 #define BOARD (SLEN * 2 + 1)
 #define FLASH 0.001 //输入的检测频率
 
@@ -35,6 +49,8 @@ int turn = -1;                         // -1==white  1==black  //回合
 int row = 0, col = 0, con;             //行列  |  输入记录
 int count = 0, undo = 0;               //下子数  |  悔棋数
 
+//const char *BLACK = "☹", *WHITE = "☺", *POS = "🐺"; // UTF-8 棋子、棋盘字符
+//const char *BLACK = "✅", *WHITE = "⚠", *POS = "☂"; // UTF-8 棋子、棋盘字符
 const char *BLACK = "○", *WHITE = "●", *POS = "¤"; // UTF-8 棋子、棋盘字符
 const char *LT = "┌", *TOP = "┬", *RT = "┐";
 const char *LEFT = "├", *CENTER = "┼", *RIGHT = "┤";
