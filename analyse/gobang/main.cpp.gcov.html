@@ -1,0 +1,510 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - analyse.info - gobang/main.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">gobang</a> - main.cpp<span style="font-size: 80%;"> (source / <a href="main.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">analyse.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">169</td>
+            <td class="headerCovTableEntry">238</td>
+            <td class="headerCovTableEntryLo">71.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-11-27 15:20:45</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryMed">83.3 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &lt;fcntl.h&gt;</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;locale.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;termio.h&gt; // Linux 专用头文件，实现getch()、kbhit()</a>
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;unistd.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            : #define CLRSCR system(&quot;clear&quot;); // Linux 命令 (Win与Lin实现方法不同</a>
+<a name="6"><span class="lineNum">       6 </span>            : #define OUTTYPE &quot;%s &quot;</a>
+<a name="7"><span class="lineNum">       7 </span>            : int getch(void); //实现：输入不需要回车键便返回</a>
+<a name="8"><span class="lineNum">       8 </span>            : int kbhit(void); //实现：检测键盘是否有输入      （这两个函数需要自行实现）</a>
+<a name="9"><span class="lineNum">       9 </span>            : </a>
+<a name="10"><span class="lineNum">      10 </span>            : #include &lt;gperftools/profiler.h&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            : </a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;cstdio&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;cstdlib&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;cstring&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;ctime&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : #define CHESS 5 //宏定义棋子数</a>
+<a name="17"><span class="lineNum">      17 </span>            : #define SLEN 10 //宏定义棋盘大小</a>
+<a name="18"><span class="lineNum">      18 </span>            : #define BOARD (SLEN * 2 + 1)</a>
+<a name="19"><span class="lineNum">      19 </span>            : #define FLASH 0.001 //输入的检测频率</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : void welcome(void);              //欢迎界面</a>
+<a name="22"><span class="lineNum">      22 </span>            : void envir(void);                //环境构建</a>
+<a name="23"><span class="lineNum">      23 </span>            : void print(void);                //棋盘输出</a>
+<a name="24"><span class="lineNum">      24 </span>            : int Icon(void);                  //核心 控制、交互部分</a>
+<a name="25"><span class="lineNum">      25 </span>            : int checkchess(void);            //棋子布局检测</a>
+<a name="26"><span class="lineNum">      26 </span>            : void regret(void);               //悔棋</a>
+<a name="27"><span class="lineNum">      27 </span>            : void gameover(int);              //游戏结束后的判定输出</a>
+<a name="28"><span class="lineNum">      28 </span>            : void delay(double);              //延时函数</a>
+<a name="29"><span class="lineNum">      29 </span>            : void gotoxy(unsigned, unsigned); //将输入光标移动到指定位置</a>
+<a name="30"><span class="lineNum">      30 </span>            : </a>
+<a name="31"><span class="lineNum">      31 </span>            : const char *board[BOARD][BOARD] = {0}; //棋盘格子样式</a>
+<a name="32"><span class="lineNum">      32 </span>            : int check[SLEN][SLEN] = {0};           //格子的状态</a>
+<a name="33"><span class="lineNum">      33 </span>            : int reg[SLEN * SLEN][3] = {0};         //悔棋：回合下子记录</a>
+<a name="34"><span class="lineNum">      34 </span>            : int turn = -1;                         // -1==white  1==black  //回合</a>
+<a name="35"><span class="lineNum">      35 </span>            : int row = 0, col = 0, con;             //行列  |  输入记录</a>
+<a name="36"><span class="lineNum">      36 </span>            : int count = 0, undo = 0;               //下子数  |  悔棋数</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : const char *BLACK = &quot;○&quot;, *WHITE = &quot;●&quot;, *POS = &quot;¤&quot;; // UTF-8 棋子、棋盘字符</a>
+<a name="39"><span class="lineNum">      39 </span>            : const char *LT = &quot;┌&quot;, *TOP = &quot;┬&quot;, *RT = &quot;┐&quot;;</a>
+<a name="40"><span class="lineNum">      40 </span>            : const char *LEFT = &quot;├&quot;, *CENTER = &quot;┼&quot;, *RIGHT = &quot;┤&quot;;</a>
+<a name="41"><span class="lineNum">      41 </span>            : const char *LF = &quot;└&quot;, *FOOT = &quot;┴&quot;, *RF = &quot;┘&quot;;</a>
+<a name="42"><span class="lineNum">      42 </span>            : const char *SPACE = &quot; &quot;;</a>
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">          1 : int main(void) {</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">          1 :   ProfilerStart(&quot;info.prof&quot;);</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">          1 :   int s;       //游戏结束的判定状态输出</span></a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">          1 :   welcome();   //欢迎界面</span></a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineCov">          1 :   envir();     //棋盘构建</span></a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">          1 :   s = Icon();  //控制交互部分</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">          1 :   gameover(s); //游戏结束</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">          1 :   ProfilerStop();</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">          1 :   return 0;</span></a>
+<a name="53"><span class="lineNum">      53 </span>            : }</a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">          1 : void welcome(void) {</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">          1 :   printf(&quot;|     Welcome To Play       |\n&quot;);</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">          1 :   printf(&quot;|     %d In Line Game        |\n&quot;, CHESS);</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">          1 :   printf(&quot;|      Board: %2d X %2d       |\n&quot;, SLEN, SLEN);</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">          1 :   printf(&quot;|                           |\n&quot;);</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">          1 :   printf(&quot;|        Copyright:         |\n&quot;);</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">          1 :   printf(&quot;|       MAO-SONG-YAN        |\n&quot;);</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">          1 :   printf(&quot;\033[?25l&quot;); //（隐藏光标）Linux下的特殊转义字符</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">          1 :   getch();</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">          1 : }</span></a>
+<a name="65"><span class="lineNum">      65 </span>            : </a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">          1 : void envir(void) //棋盘构建</span></a>
+<a name="67"><span class="lineNum">      67 </span>            : {</a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">         22 :   for (int j = 0; j &lt; BOARD; j++) // 先全部赋为空格</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">        462 :     for (int k = 0; k &lt; BOARD; k++)</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">        441 :       board[j][k] = SPACE;</span></a>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">          1 :   board[0][0] = LT; //棋盘四个角的搭建</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">          1 :   board[0][BOARD - 1] = RT;</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">          1 :   board[BOARD - 1][0] = LF;</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">          1 :   board[BOARD - 1][BOARD - 1] = RF;</span></a>
+<a name="76"><span class="lineNum">      76 </span>            : </a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">         10 :   for (int i = 2; i &lt; BOARD - 2; i += 2) { //四边搭建</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">          9 :     board[0][i] = TOP;</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">          9 :     board[BOARD - 1][i] = FOOT;</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">          9 :     board[i][0] = LEFT;</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">          9 :     board[i][BOARD - 1] = RIGHT;</span></a>
+<a name="82"><span class="lineNum">      82 </span>            :   }</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">         10 :   for (int j = 2; j &lt; BOARD - 2; j += 2) //非边角搭建</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         90 :     for (int k = 2; k &lt; BOARD - 2; k += 2) {</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">         81 :       board[j][k] = CENTER;</span></a>
+<a name="86"><span class="lineNum">      86 </span>            :     }</a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">          1 : }</span></a>
+<a name="88"><span class="lineNum">      88 </span>            : </a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">          1 : void print(void) {</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">          1 :   CLRSCR; //清屏 清除欢迎界面</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">         22 :   for (int j = 0; j &lt; BOARD; j++) {</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">        462 :     for (int k = 0; k &lt; BOARD; k++) ///  这里比较复杂</span></a>
+<a name="93"><span class="lineNum">      93 </span>            :     {</a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">        441 :       if ((j - 1) % 2 == 0 &amp;&amp;</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">        210 :           (k - 1) % 2 == 0) { //根据格子对应check[][]的值输出</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        100 :         int sam = check[(j - 1) / 2][(k - 1) / 2];</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">        100 :         if (sam == 0)</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">         99 :           printf(&quot;  &quot;);</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">          1 :         else if (sam == -1)</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, WHITE);</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">          1 :         else if (sam == 1)</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, BLACK);</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">          1 :         else if (sam == 3 || sam == -2 || sam == 2)</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">          1 :           printf(OUTTYPE, POS);</span></a>
+<a name="105"><span class="lineNum">     105 </span>            :       } else</a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">        341 :         printf(OUTTYPE, board[j][k]);</span></a>
+<a name="107"><span class="lineNum">     107 </span>            :     }</a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">         21 :     putchar('\n');</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :   }</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">          1 :   if (turn == 1)</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :     printf(&quot;  %s  Black turn&quot;, BLACK); //回合输出</span></a>
+<a name="112"><span class="lineNum">     112 </span>            :   else</a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">          1 :     printf(&quot;  %s  White turn&quot;, WHITE);</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">          1 :   printf(&quot;    POS(%2d,%2d)  undo: %d\n&quot;, row + 1, col + 1,</span></a>
+<a name="115"><span class="lineNum">     115 </span>            :          undo); //光标位置与悔棋次数</a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">          1 : }</span></a>
+<a name="117"><span class="lineNum">     117 </span>            : //   超级堆叠宏定义</a>
+<a name="118"><span class="lineNum">     118 </span>            : #define LOCATE check[row][col] //格子对应的值</a>
+<a name="119"><span class="lineNum">     119 </span>            : #define NOTCHESS LOCATE == 0   //格子对应值的判断</a>
+<a name="120"><span class="lineNum">     120 </span>            : #define ISWHITE LOCATE == -1</a>
+<a name="121"><span class="lineNum">     121 </span>            : #define ISBLACK LOCATE == 1</a>
+<a name="122"><span class="lineNum">     122 </span>            : #define GOTOCURR                                                               \</a>
+<a name="123"><span class="lineNum">     123 </span>            :   gotoxy(1 + 2 * (1 + 2 * col), 2 + 2 * row); //将光标移到光标位置</a>
+<a name="124"><span class="lineNum">     124 </span>            : #define printSPACE                                                             \</a>
+<a name="125"><span class="lineNum">     125 </span>            :   { GOTOCURR printf(OUTTYPE, SPACE); } //输出空格</a>
+<a name="126"><span class="lineNum">     126 </span>            : #define printPOS                                                               \</a>
+<a name="127"><span class="lineNum">     127 </span>            :   { GOTOCURR printf(OUTTYPE, POS); } //输出光标</a>
+<a name="128"><span class="lineNum">     128 </span>            : #define printWHITE                                                             \</a>
+<a name="129"><span class="lineNum">     129 </span>            :   { GOTOCURR printf(OUTTYPE, WHITE); } //输出白棋</a>
+<a name="130"><span class="lineNum">     130 </span>            : #define printBLACK                                                             \</a>
+<a name="131"><span class="lineNum">     131 </span>            :   { GOTOCURR printf(OUTTYPE, BLACK); } //输出黑棋</a>
+<a name="132"><span class="lineNum">     132 </span>            : #define INFORM                                                                 \</a>
+<a name="133"><span class="lineNum">     133 </span>            :   {                                                                            \</a>
+<a name="134"><span class="lineNum">     134 </span>            :     gotoxy(0, BOARD + 1);                                                      \</a>
+<a name="135"><span class="lineNum">     135 </span>            :     if (turn &gt; 0)                                                              \</a>
+<a name="136"><span class="lineNum">     136 </span>            :       printf(&quot;  %s  Black turn&quot;, BLACK);                                       \</a>
+<a name="137"><span class="lineNum">     137 </span>            :     else                                                                       \</a>
+<a name="138"><span class="lineNum">     138 </span>            :       printf(&quot;  %s  White turn&quot;, WHITE);                                       \</a>
+<a name="139"><span class="lineNum">     139 </span>            :     printf(&quot;    POS(%2d,%2d)  undo: %d\n&quot;, row + 1, col + 1, undo);            \</a>
+<a name="140"><span class="lineNum">     140 </span>            :   } //棋盘底状态输出</a>
+<a name="141"><span class="lineNum">     141 </span>            : #define MOVE                                                                   \</a>
+<a name="142"><span class="lineNum">     142 </span>            :   {                                                                            \</a>
+<a name="143"><span class="lineNum">     143 </span>            :     if (NOTCHESS)                                                              \</a>
+<a name="144"><span class="lineNum">     144 </span>            :       LOCATE = 3;                                                              \</a>
+<a name="145"><span class="lineNum">     145 </span>            :     else if (ISWHITE)                                                          \</a>
+<a name="146"><span class="lineNum">     146 </span>            :       LOCATE = -2;                                                             \</a>
+<a name="147"><span class="lineNum">     147 </span>            :     else if (ISBLACK)                                                          \</a>
+<a name="148"><span class="lineNum">     148 </span>            :       LOCATE = 2;                                                              \</a>
+<a name="149"><span class="lineNum">     149 </span>            :     INFORM                                                                     \</a>
+<a name="150"><span class="lineNum">     150 </span>            :   } //光标移动</a>
+<a name="151"><span class="lineNum">     151 </span>            : #define RESTORE                                                                \</a>
+<a name="152"><span class="lineNum">     152 </span>            :   {                                                                            \</a>
+<a name="153"><span class="lineNum">     153 </span>            :     if (LOCATE == 3) {                                                         \</a>
+<a name="154"><span class="lineNum">     154 </span>            :       LOCATE = 0;                                                              \</a>
+<a name="155"><span class="lineNum">     155 </span>            :       printSPACE                                                               \</a>
+<a name="156"><span class="lineNum">     156 </span>            :     } else if (LOCATE == -2) {                                                 \</a>
+<a name="157"><span class="lineNum">     157 </span>            :       LOCATE = -1;                                                             \</a>
+<a name="158"><span class="lineNum">     158 </span>            :       printWHITE                                                               \</a>
+<a name="159"><span class="lineNum">     159 </span>            :     } else if (LOCATE == 2) {                                                  \</a>
+<a name="160"><span class="lineNum">     160 </span>            :       LOCATE = 1;                                                              \</a>
+<a name="161"><span class="lineNum">     161 </span>            :       printBLACK                                                               \</a>
+<a name="162"><span class="lineNum">     162 </span>            :     }                                                                          \</a>
+<a name="163"><span class="lineNum">     163 </span>            :   } //光标移出格子的回复</a>
+<a name="164"><span class="lineNum">     164 </span>            : #define PUTDOWN                                                                \</a>
+<a name="165"><span class="lineNum">     165 </span>            :   {                                                                            \</a>
+<a name="166"><span class="lineNum">     166 </span>            :     if (turn == -1) {                                                          \</a>
+<a name="167"><span class="lineNum">     167 </span>            :       printWHITE LOCATE = turn;                                                \</a>
+<a name="168"><span class="lineNum">     168 </span>            :     } else if (turn == 1) {                                                    \</a>
+<a name="169"><span class="lineNum">     169 </span>            :       printBLACK LOCATE = turn;                                                \</a>
+<a name="170"><span class="lineNum">     170 </span>            :     }                                                                          \</a>
+<a name="171"><span class="lineNum">     171 </span>            :   } //下子</a>
+<a name="172"><span class="lineNum">     172 </span>            : #define MEMORY                                                                 \</a>
+<a name="173"><span class="lineNum">     173 </span>            :   {                                                                            \</a>
+<a name="174"><span class="lineNum">     174 </span>            :     reg[count][0] = turn;                                                      \</a>
+<a name="175"><span class="lineNum">     175 </span>            :     reg[count][1] = row;                                                       \</a>
+<a name="176"><span class="lineNum">     176 </span>            :     reg[count][2] = col;                                                       \</a>
+<a name="177"><span class="lineNum">     177 </span>            :   } //把下棋状态记在悔棋回合记录里</a>
+<a name="178"><span class="lineNum">     178 </span>            : #define PLACE                                                                  \</a>
+<a name="179"><span class="lineNum">     179 </span>            :   {                                                                            \</a>
+<a name="180"><span class="lineNum">     180 </span>            :     PUTDOWN;                                                                   \</a>
+<a name="181"><span class="lineNum">     181 </span>            :     MEMORY;                                                                    \</a>
+<a name="182"><span class="lineNum">     182 </span>            :     turn = -turn;                                                              \</a>
+<a name="183"><span class="lineNum">     183 </span>            :     count++;                                                                   \</a>
+<a name="184"><span class="lineNum">     184 </span>            :     INFORM;                                                                    \</a>
+<a name="185"><span class="lineNum">     185 </span>            :   } //下子的总过程</a>
+<a name="186"><span class="lineNum">     186 </span>            : </a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">          1 : int Icon(void) //核心 控制、交互部分</span></a>
+<a name="188"><span class="lineNum">     188 </span>            : {</a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">          1 :   unsigned int s = 0; //输入检测的总次数</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">          1 :   LOCATE = 3;         //初始光标位置</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">          1 :   print();            //棋盘整体输出    （其实0.8版只用了一次）</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">          1 :   system(&quot;stty -echo&quot;); // Linux命令   命令不被显示</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      20339 :   while (1) {</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">      20339 :     if (kbhit()) { //检测键盘是否有输入   有输入情况下</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">         40 :       while ((con = getch()) != '`') //退出按键</span></a>
+<a name="196"><span class="lineNum">     196 </span>            :       {</a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">         39 :         if (con == 29)</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineNoCov">          0 :           if (getch() == 91)</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineNoCov">          0 :             con = getch(); // Linux键盘控制的特殊情况</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">         39 :         if (con == 'w' || con == 's' || con == 'a' || con == 'd' ||</span></a>
+<a name="201"><span class="lineNum">     201 </span>            :             con == ' ' || con == 65 || con == 66 || con == 67 || con == 68 ||</a>
+<a name="202"><span class="lineNum">     202 </span>            :             con == '/' || con == 'r') {</a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">         39 :           if (con != ' ' &amp;&amp; con != '/')</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">         78 :             RESTORE;     //移动光标前，先把原格子复位</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         39 :           switch (con) { //光标移动、下子</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">          9 :           case 'w':</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">          9 :             if (row &gt; 0)</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">          9 :               row--;</span></a>
+<a name="209"><span class="lineNum">     209 </span>            :             else</a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineNoCov">          0 :               row = SLEN - 1;</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">         18 :             MOVE;</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">          9 :             printPOS break;</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">         15 :           case 's':</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">         15 :             if (row &lt; SLEN - 1)</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">         15 :               row++;</span></a>
+<a name="216"><span class="lineNum">     216 </span>            :             else</a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineNoCov">          0 :               row = 0;</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">         30 :             MOVE;</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">         15 :             printPOS break;</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineCov">          6 :           case 'a':</span></a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">          6 :             if (col &gt; 0)</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">          6 :               col--;</span></a>
+<a name="223"><span class="lineNum">     223 </span>            :             else</a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineNoCov">          0 :               col = SLEN - 1;</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">         12 :             MOVE;</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">          6 :             printPOS break;</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">          9 :           case 'd':</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">          9 :             if (col &lt; SLEN - 1)</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">          9 :               col++;</span></a>
+<a name="230"><span class="lineNum">     230 </span>            :             else</a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineNoCov">          0 :               col = 0;</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">         18 :             MOVE;</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">          9 :             printPOS break;</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineNoCov">          0 :           case 65:</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineNoCov">          0 :             if (row &gt; 0)</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineNoCov">          0 :               row--;</span></a>
+<a name="237"><span class="lineNum">     237 </span>            :             else</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineNoCov">          0 :               row = SLEN - 1;</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineNoCov">          0 :             MOVE;</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineNoCov">          0 :             printPOS break;</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineNoCov">          0 :           case 66:</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineNoCov">          0 :             if (row &lt; SLEN - 1)</span></a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineNoCov">          0 :               row++;</span></a>
+<a name="244"><span class="lineNum">     244 </span>            :             else</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 :               row = 0;</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineNoCov">          0 :             MOVE;</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineNoCov">          0 :             printPOS break;</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineNoCov">          0 :           case 68:</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineNoCov">          0 :             if (col &gt; 0)</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineNoCov">          0 :               col--;</span></a>
+<a name="251"><span class="lineNum">     251 </span>            :             else</a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineNoCov">          0 :               col = SLEN - 1;</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineNoCov">          0 :             MOVE;</span></a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineNoCov">          0 :             printPOS break;</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineNoCov">          0 :           case 67:</span></a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineNoCov">          0 :             if (col &lt; SLEN - 1)</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineNoCov">          0 :               col++;</span></a>
+<a name="258"><span class="lineNum">     258 </span>            :             else</a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineNoCov">          0 :               col = 0;</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineNoCov">          0 :             MOVE;</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineNoCov">          0 :             printPOS break;</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineNoCov">          0 :           case ' ':</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineNoCov">          0 :             if (LOCATE == 3)</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineNoCov">          0 :               PLACE;</span></a>
+<a name="265"><span class="lineNum">     265 </span>            :             break;</a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineNoCov">          0 :           case '/':</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineNoCov">          0 :             if (LOCATE == 3)</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineNoCov">          0 :               PLACE;</span></a>
+<a name="269"><span class="lineNum">     269 </span>            :             break;</a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineNoCov">          0 :           case 'r':</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineNoCov">          0 :             if (count &gt;= 0)</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineNoCov">          0 :               regret();</span></a>
+<a name="273"><span class="lineNum">     273 </span>            :             break; //悔棋按钮</a>
+<a name="274"><span class="lineNum">     274 </span>            :           default:</a>
+<a name="275"><span class="lineNum">     275 </span>            :             break;</a>
+<a name="276"><span class="lineNum">     276 </span>            :           }</a>
+<a name="277"><span class="lineNum">     277 </span>            :         }</a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">         39 :         if (count == SLEN * SLEN)</span></a>
+<a name="279"><span class="lineNum">     279 </span>            :           return 0; //如果棋盘满 返回平局</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">         39 :         if (checkchess())</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :           return 1; //如果一方赢了 返回分出胜负</a>
+<a name="282"><span class="lineNum">     282 </span>            :         break;</a>
+<a name="283"><span class="lineNum">     283 </span>            :       }</a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">         40 :       if (con == '`')</span></a>
+<a name="285"><span class="lineNum">     285 </span>            :         return 2; //强制退出</a>
+<a name="286"><span class="lineNum">     286 </span>            :     } else {</a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">      20299 :       if (s % 500 == 0) { //每检测输入500次闪烁一次</span></a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">         82 :         GOTOCURR          //去光标所在格子替换原字符</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">         41 :             if (LOCATE == -1) {</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineNoCov">          0 :           LOCATE = -2;</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, POS);</span></a>
+<a name="292"><span class="lineNum">     292 </span>            :         }</a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">         41 :         else if (LOCATE == -2) {</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineNoCov">          0 :           LOCATE = -1;</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, WHITE);</span></a>
+<a name="296"><span class="lineNum">     296 </span>            :         }</a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">         41 :         else if (LOCATE == 1) {</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineNoCov">          0 :           LOCATE = 2;</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, POS);</span></a>
+<a name="300"><span class="lineNum">     300 </span>            :         }</a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">         41 :         else if (LOCATE == 2) {</span></a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineNoCov">          0 :           LOCATE = 1;</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineNoCov">          0 :           printf(OUTTYPE, BLACK);</span></a>
+<a name="304"><span class="lineNum">     304 </span>            :         }</a>
+<a name="305"><span class="lineNum">     305 </span>            :         // print();</a>
+<a name="306"><span class="lineNum">     306 </span>            :       }</a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">      20299 :       s++;</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">      20299 :       delay(FLASH); //延时</span></a>
+<a name="309"><span class="lineNum">     309 </span>            :     }</a>
+<a name="310"><span class="lineNum">     310 </span>            :   }</a>
+<a name="311"><span class="lineNum">     311 </span>            : }</a>
+<a name="312"><span class="lineNum">     312 </span>            : </a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">         39 : int checkchess(void) //棋子布局检测</span></a>
+<a name="314"><span class="lineNum">     314 </span>            : {</a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">         39 :   bool judge;                    //胜利判断</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">         39 :   int pres;                      //当前格子对应值</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        429 :   for (int j = 0; j &lt; SLEN; j++) /// check rows || columns</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">       4290 :     for (int k = 0; k &lt; SLEN; k++)</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">       3900 :       if (check[j][k] != 0) {</span></a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">         39 :         pres = check[j][k];</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">         39 :         judge = true;</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         39 :         if (j &lt;= SLEN - CHESS &amp;&amp; k &lt;= SLEN - CHESS) {</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">         85 :           for (int l = 1; l &lt; CHESS; l++)</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">         68 :             if (check[j + l][k + l] != pres)</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">         68 :               judge = false; /// oblique right</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">         17 :           if (judge == true)</span></a>
+<a name="327"><span class="lineNum">     327 </span>            :             return 1; //右斜</a>
+<a name="328"><span class="lineNum">     328 </span>            :         }</a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineCov">         39 :         judge = true;</span></a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">         39 :         if (j &lt;= SLEN - CHESS &amp;&amp; k &gt;= CHESS - 1) {</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">         30 :           for (int l = 1; l &lt; CHESS; l++)</span></a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">         24 :             if (check[j + l][k - l] != pres)</span></a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">         24 :               judge = false; /// oblique left</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">          6 :           if (judge == true)</span></a>
+<a name="335"><span class="lineNum">     335 </span>            :             return 1; //左斜</a>
+<a name="336"><span class="lineNum">     336 </span>            :         }</a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">         39 :         judge = true;</span></a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">         39 :         if (k &lt;= SLEN - CHESS) {</span></a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">        175 :           for (int l = 1; l &lt; CHESS; l++)</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">        140 :             if (check[j][k + l] != pres)</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">        140 :               judge = false; /// horizontal</span></a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">         35 :           if (judge == true)</span></a>
+<a name="343"><span class="lineNum">     343 </span>            :             return 1; //水平</a>
+<a name="344"><span class="lineNum">     344 </span>            :         }</a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">         39 :         judge = true;</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">         39 :         if (j &lt;= SLEN - CHESS) {</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">         85 :           for (int l = 1; l &lt; CHESS; l++)</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">         68 :             if (check[j + l][k] != pres)</span></a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">         68 :               judge = false; /// vertical</span></a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">         17 :           if (judge == true)</span></a>
+<a name="351"><span class="lineNum">     351 </span>            :             return 1; //竖直</a>
+<a name="352"><span class="lineNum">     352 </span>            :         }</a>
+<a name="353"><span class="lineNum">     353 </span>            :       }</a>
+<a name="354"><span class="lineNum">     354 </span>            :   return 0;</a>
+<a name="355"><span class="lineNum">     355 </span>            : }</a>
+<a name="356"><span class="lineNum">     356 </span>            : </a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">          1 : void gameover(int s) //游戏结束输出</span></a>
+<a name="358"><span class="lineNum">     358 </span>            : {</a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">          2 :   gotoxy(0, BOARD + 2); //把输入光标移去底部</span></a>
+<a name="360"><span class="lineNum">     360 </span><span class="lineCov">          1 :   if (s) {</span></a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">          1 :     if (s == 2)</span></a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">          1 :       printf(&quot;Force exit\n&quot;);</span></a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineNoCov">          0 :     else if (turn == 1)</span></a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineNoCov">          0 :       printf(&quot;\t-----%s White Won-----\n&quot;, WHITE);</span></a>
+<a name="365"><span class="lineNum">     365 </span>            :     else</a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineNoCov">          0 :       printf(&quot;\t-----%s Black Won-----\n&quot;, BLACK);</span></a>
+<a name="367"><span class="lineNum">     367 </span>            :   } else</a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineNoCov">          0 :     printf(&quot;\t-----Tied-----\n&quot;);</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">          1 :   system(&quot;stty echo&quot;); //终端 恢复默认状态</span></a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">          1 :   printf(&quot;\033[?25h&quot;);</span></a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">          1 : }</span></a>
+<a name="372"><span class="lineNum">     372 </span>            : </a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">        159 : void gotoxy(unsigned x, unsigned y) //将输入光标移动到指定位置</span></a>
+<a name="374"><span class="lineNum">     374 </span>            : {</a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineCov">        159 :   printf(&quot;%c[%d;%df&quot;, 0x1b, y, x); //同样是特殊的转义字符（感谢圣哥的技术狗窝）</span></a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="377"><span class="lineNum">     377 </span>            : </a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineCov">      20299 : void delay(double z) //延时函数</span></a>
+<a name="379"><span class="lineNum">     379 </span>            : {</a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">      20299 :   double start = (double)clock() / CLOCKS_PER_SEC; //利用CPU时钟定时</span></a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineCov">  138390692 :   while (((double)clock() / CLOCKS_PER_SEC) - start &lt; z)</span></a>
+<a name="382"><span class="lineNum">     382 </span>            :     ;</a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">      20299 : }</span></a>
+<a name="384"><span class="lineNum">     384 </span>            : </a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineNoCov">          0 : void regret(void) //悔棋实现函数</span></a>
+<a name="386"><span class="lineNum">     386 </span>            : {</a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineNoCov">          0 :   if (count) {</span></a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineNoCov">          0 :     count--;</span></a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineNoCov">          0 :     turn = -turn;</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineNoCov">          0 :     undo++;</span></a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineNoCov">          0 :     row = reg[count][1]; //根据数组记录内容悔棋</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineNoCov">          0 :     col = reg[count][2];</span></a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineNoCov">          0 :     for (int j = 0; j &lt; 3; j++)</span></a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineNoCov">          0 :       reg[count][j] = 0;</span></a>
+<a name="395"><span class="lineNum">     395 </span>            :   }</a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineNoCov">          0 :   INFORM;</span></a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineNoCov">          0 :   printPOS;</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineNoCov">          0 :   LOCATE = 3;</span></a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="400"><span class="lineNum">     400 </span>            : </a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineCov">         41 : int getch(void) {</span></a>
+<a name="402"><span class="lineNum">     402 </span><span class="lineCov">         41 :   struct termios tm, tm_old;</span></a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">         41 :   int fd = 0, ch;</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">         41 :   if (tcgetattr(fd, &amp;tm) &lt; 0)</span></a>
+<a name="405"><span class="lineNum">     405 </span>            :     return -1;</a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">         41 :   tm_old = tm;</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">         41 :   cfmakeraw(&amp;tm);</span></a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineCov">         41 :   if (tcsetattr(fd, TCSANOW, &amp;tm) &lt; 0)</span></a>
+<a name="409"><span class="lineNum">     409 </span>            :     return -1;</a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">         41 :   ch = getchar();</span></a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineCov">         41 :   if (tcsetattr(fd, TCSANOW, &amp;tm_old) &lt; 0)</span></a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineNoCov">          0 :     return -1;</span></a>
+<a name="413"><span class="lineNum">     413 </span>            :   return ch;</a>
+<a name="414"><span class="lineNum">     414 </span>            : }</a>
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineCov">      20339 : int kbhit(void) {</span></a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">      20339 :   struct termios oldt, newt;</span></a>
+<a name="418"><span class="lineNum">     418 </span><span class="lineCov">      20339 :   int ch;</span></a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineCov">      20339 :   int oldf;</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">      20339 :   tcgetattr(STDIN_FILENO, &amp;oldt);</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">      20339 :   newt = oldt;</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineCov">      20339 :   newt.c_lflag &amp;= ~(ICANON | ECHO);</span></a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineCov">      20339 :   tcsetattr(STDIN_FILENO, TCSANOW, &amp;newt);</span></a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineCov">      20339 :   oldf = fcntl(STDIN_FILENO, F_GETFL, 0);</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineCov">      20339 :   fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);</span></a>
+<a name="426"><span class="lineNum">     426 </span><span class="lineCov">      20339 :   ch = getchar();</span></a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineCov">      20339 :   tcsetattr(STDIN_FILENO, TCSANOW, &amp;oldt);</span></a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineCov">      20339 :   fcntl(STDIN_FILENO, F_SETFL, oldf);</span></a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineCov">      20339 :   if (ch != EOF) {</span></a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineCov">         40 :     ungetc(ch, stdin);</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineCov">         40 :     return 1;</span></a>
+<a name="432"><span class="lineNum">     432 </span>            :   }</a>
+<a name="433"><span class="lineNum">     433 </span>            :   return 0;</a>
+<a name="434"><span class="lineNum">     434 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.15</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
